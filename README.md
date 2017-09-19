@@ -9,8 +9,8 @@ In an attempt to strip prefix and suffix, I'm looking for the first alpha charac
 
 Some examples:
 
-Lond0n2012 becomes London
-123s3cr3t becomes secret
-1p455w0rd9 becomes password
+* Lond0n2012 becomes London
+* 123s3cr3t becomes secret
+* 1p455w0rd9 becomes password
 
 This means I might miss some words so will try to work on this to tune it a bit better.
