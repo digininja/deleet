@@ -22,6 +22,8 @@ Basic usage:
 Usage: deleet.rb [OPTION]
 	--file, -f: The file to parse
 	--output, -o: The file to write to
+	--ltrim: Strip all non-alpha from the left
+	--rtrim: Strip all non-alpha from the right
 	--verbose, -v: more output (currently nothing extra to show)
 	--debug, -d: debug information
 
@@ -38,26 +40,36 @@ leet_swap = {
 	'7' => ['t'],
 	'8' => ['b'],
 	'0' => ['o'],
+	'@' => ['a'],
+	'$' => ['s'],
 }
 
 VERSION="0.1 alpha"
 
 opts = GetoptLong.new(
 	['--help', '-h', "-?", GetoptLong::NO_ARGUMENT],
+	['--ltrim', GetoptLong::NO_ARGUMENT],
+	['--rtrim', GetoptLong::NO_ARGUMENT],
 	['--file', '-f', GetoptLong::REQUIRED_ARGUMENT],
 	['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
 	['--debug', '-d', GetoptLong::NO_ARGUMENT],
 	['--verbose', '-v', GetoptLong::NO_ARGUMENT]
 )
 
-@input_file_handle = STDIN
+@input_file_handle = nil
 @output_handle = STDOUT
 @debug = false
 @verbose = false
+@ltrim = false
+@rtrim = false
 
 begin
 	opts.each do |opt, arg|
 		case opt
+		when '--rtrim'
+			@rtrim = true
+		when '--ltrim'
+			@ltrim = true
 		when '--file'
 			if arg == '-'
 				@input_file_handle = STDIN
@@ -97,7 +109,6 @@ end
 if @input_file_handle.nil?
 	puts 'No input file specified'
 	puts
-	usage
 	exit
 end
 
@@ -109,12 +120,16 @@ end
 
 @input_file_handle.each do |word|
 	word.chomp!
-	hits = /^[^a-z]*([a-z0-9]*[a-z])[^a-z]*$/i.match(word)
+	if @ltrim
+		word.gsub!(/^[^a-z]*/i, "")
+	end
+	if @rtrim
+		word.gsub!(/[^a-z]*$/i, "")
+	end
 
-	if not hits.nil? and hits.length > 0 and hits[1].length > 0 then
-		trimmed = hits[1]
-		puts word + " = " + trimmed if @debug
-		leetarr = leet_variations(trimmed, leet_swap)
+	if word != "" then
+		puts word + " = " + word if @debug
+		leetarr = leet_variations(word, leet_swap)
 		leetarr.each do |leetvar|
 			@output_handle.puts leetvar
 		end
