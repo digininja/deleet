@@ -28,7 +28,8 @@ Usage: deleet.rb [OPTION]
 	--rtrim: Strip all non-alpha from the right
 	--lower, -l: Convert all results to lower case
 	--uniq, -u: Strip out duplicates
-	--counts, -c: Work out the counts for each word
+	--ordered <withcount>: Order by the most popular word, withcount includes
+	                       the count in output
 	--verbose, -v: more output (currently nothing extra to show)
 	--debug, -d: debug information
 
@@ -57,7 +58,7 @@ opts = GetoptLong.new(
 	['--rtrim', GetoptLong::NO_ARGUMENT],
 	['--lower', '-l', GetoptLong::NO_ARGUMENT],
 	['--uniq', '-u', GetoptLong::NO_ARGUMENT],
-	['--counts', '-c', GetoptLong::NO_ARGUMENT],
+	['--ordered', GetoptLong::OPTIONAL_ARGUMENT],
 	['--file', '-f', GetoptLong::REQUIRED_ARGUMENT],
 	['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
 	['--debug', '-d', GetoptLong::NO_ARGUMENT],
@@ -72,13 +73,17 @@ opts = GetoptLong.new(
 @rtrim = false
 @uniq = false
 @lower = false
+@ordered = false
 @counts = false
 
 begin
 	opts.each do |opt, arg|
 		case opt
-		when '--counts'
-			@counts = true
+		when '--ordered'
+			if arg == "withcount"
+				@counts = true
+			end
+			@ordered = true
 		when '--lower'
 			@lower = true
 		when '--uniq'
@@ -166,7 +171,7 @@ end
 					@output_handle.puts leetvar
 					@uniq_crcs << crc
 				end
-			elsif @counts
+			elsif @ordered
 				if not @word_cache.has_key?(leetvar)
 					@word_cache[leetvar] = 0
 				end
@@ -179,9 +184,12 @@ end
 end
 
 @sorted = @word_cache.sort_by {|_key, value| value * -1}
-if @counts then
+if @ordered then
 	@sorted.each do |word_count|
-		@output_handle.puts "#{word_count[0]} : #{word_count[1]}"
+		if @counts then
+			@output_handle.puts "#{word_count[0]} : #{word_count[1]}"
+		else
+			@output_handle.puts word_count[0]
+		end
 	end
 end
-
