@@ -178,9 +178,10 @@ end
 	end
 end
 
+@sorted = @word_cache.sort_by {|_key, value| value * -1}
 if @counts then
-	@word_cache.each_pair do |word, count|
-		@output_handle.puts "#{word} : #{count}"
+	@sorted.each do |word_count|
+		@output_handle.puts "#{word_count[0]} : #{word_count[1]}"
 	end
 end
 
