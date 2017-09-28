@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+#encoding: UTF-8
 
 #
 # == deleet: Take a wordlist and remove 1337 spellings from it
@@ -9,6 +10,7 @@
 #
 
 require 'getoptlong'
+require 'zlib'
 
 #
 # Display the usage
@@ -24,6 +26,8 @@ Usage: deleet.rb [OPTION]
 	--output, -o: The file to write to
 	--ltrim: Strip all non-alpha from the left
 	--rtrim: Strip all non-alpha from the right
+	--lower, -l: Convert all results to lower case
+	--uniq, -u: Strip out duplicates
 	--verbose, -v: more output (currently nothing extra to show)
 	--debug, -d: debug information
 
@@ -50,6 +54,8 @@ opts = GetoptLong.new(
 	['--help', '-h', "-?", GetoptLong::NO_ARGUMENT],
 	['--ltrim', GetoptLong::NO_ARGUMENT],
 	['--rtrim', GetoptLong::NO_ARGUMENT],
+	['--lower', '-l', GetoptLong::NO_ARGUMENT],
+	['--uniq', '-u', GetoptLong::NO_ARGUMENT],
 	['--file', '-f', GetoptLong::REQUIRED_ARGUMENT],
 	['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
 	['--debug', '-d', GetoptLong::NO_ARGUMENT],
@@ -62,10 +68,16 @@ opts = GetoptLong.new(
 @verbose = false
 @ltrim = false
 @rtrim = false
+@uniq = false
+@lower = false
 
 begin
 	opts.each do |opt, arg|
 		case opt
+		when '--lower'
+			@lower = true
+		when '--uniq'
+			@uniq = true
 		when '--rtrim'
 			@rtrim = true
 		when '--ltrim'
@@ -118,8 +130,13 @@ def leet_variations (str, swap)
   arr.shift.product(*arr).map(&:join)
 end
 
+@uniq_crcs = []
+
 @input_file_handle.each do |word|
 	word.chomp!
+	if @lower
+		word.downcase!
+	end
 	if @ltrim
 		word.gsub!(/^[^a-z]*/i, "")
 	end
@@ -131,7 +148,15 @@ end
 		puts word + " = " + word if @debug
 		leetarr = leet_variations(word, leet_swap)
 		leetarr.each do |leetvar|
-			@output_handle.puts leetvar
+			if @uniq
+				crc = Zlib::crc32(leetvar)
+				if not @uniq_crcs.include?(crc)
+					@output_handle.puts leetvar
+					@uniq_crcs << crc
+				end
+			else
+				@output_handle.puts leetvar
+			end
 		end
 	end
 end
