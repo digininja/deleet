@@ -28,6 +28,7 @@ Usage: deleet.rb [OPTION]
 	--rtrim: Strip all non-alpha from the right
 	--lower, -l: Convert all results to lower case
 	--uniq, -u: Strip out duplicates
+	--counts, -c: Work out the counts for each word
 	--verbose, -v: more output (currently nothing extra to show)
 	--debug, -d: debug information
 
@@ -56,6 +57,7 @@ opts = GetoptLong.new(
 	['--rtrim', GetoptLong::NO_ARGUMENT],
 	['--lower', '-l', GetoptLong::NO_ARGUMENT],
 	['--uniq', '-u', GetoptLong::NO_ARGUMENT],
+	['--counts', '-c', GetoptLong::NO_ARGUMENT],
 	['--file', '-f', GetoptLong::REQUIRED_ARGUMENT],
 	['--output', '-o', GetoptLong::REQUIRED_ARGUMENT],
 	['--debug', '-d', GetoptLong::NO_ARGUMENT],
@@ -70,10 +72,13 @@ opts = GetoptLong.new(
 @rtrim = false
 @uniq = false
 @lower = false
+@counts = false
 
 begin
 	opts.each do |opt, arg|
 		case opt
+		when '--counts'
+			@counts = true
 		when '--lower'
 			@lower = true
 		when '--uniq'
@@ -124,6 +129,12 @@ if @input_file_handle.nil?
 	exit
 end
 
+if @counts and @uniq
+	puts "Setting counts and uniq does not make sense, please choose one or the other"
+	puts
+	exit
+end
+
 def leet_variations (str, swap)
   swap_all = Hash.new { |_,k| [k] }.merge(swap) 
   arr = swap_all.values_at(*str.chars)
@@ -131,6 +142,7 @@ def leet_variations (str, swap)
 end
 
 @uniq_crcs = []
+@word_cache = {}
 
 @input_file_handle.each do |word|
 	word.chomp!
@@ -154,9 +166,21 @@ end
 					@output_handle.puts leetvar
 					@uniq_crcs << crc
 				end
+			elsif @counts
+				if not @word_cache.has_key?(leetvar)
+					@word_cache[leetvar] = 0
+				end
+				@word_cache[leetvar] += 1
 			else
 				@output_handle.puts leetvar
 			end
 		end
 	end
 end
+
+if @counts then
+	@word_cache.each_pair do |word, count|
+		@output_handle.puts "#{word} : #{count}"
+	end
+end
+
